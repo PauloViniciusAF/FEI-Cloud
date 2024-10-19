@@ -4,7 +4,7 @@ Integrante do Projeto
   - Paulo Vinicius Araujo Feitosa
   - R.A: 24122.042-5
 # Diagrama Relacional
-![](https://github.com/PauloViniciusAF/Banco-FEIfy/blob/main/diagrama_relacionalpng.png)
+![](https://github.com/PauloViniciusAF/FEI-Cloud/blob/main/diagrama_relacionalpng.png)
 
 
 # Como se conectar ao Banco de dados 
