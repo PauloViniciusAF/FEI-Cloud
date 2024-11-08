@@ -4,15 +4,15 @@ from faker import Faker as fk
 import psycopg2
 fk = fk("pt_BR")
 
-'''
+
 config = {
-    'dbname':'NOME DO BANCO DE DADOS',
-    'user':'NOME USUÁRIO',
-    'password':'SENHA',
-    'host':'HOST DO BANCO DE DADOS',
+    'dbname':'betdb',
+    'user':'paulo',
+    'password':'dT5GNc6ANDRpUpTPTeiUeA',
+    'host':'clutch-master-2467.g8x.gcp-southamerica-east1.cockroachlabs.cloud',
     'port':'26257'
 }
-'''
+
 
 def connect():
 # Establish database connection
@@ -21,114 +21,121 @@ def connect():
 
     # Create a cursor object
     with cnx.cursor() as cursor:
-
         cursor.execute("SELECT NOW();")
         queries(cursor, cnx)
 
 def queries(cursor, cnx):
-    cursor.execute("DROP TABLE IF EXISTS música, playlist, disco, usuário, artista, playlist_música, música_artista")
+    cursor.execute("DROP TABLE IF EXISTS usuário, depósito, Usuário_Depósito, esportes, aposta, cassino")
     print("Tabelas atualizadas!")
-    
-
-    #TABELA ARTISTA
-    create_tb = """
-    CREATE TABLE artista(
-    id_artista      bigint NOT NULL,
-    primary key     (id_artista),
-    nome_artista    varchar(255),
-    nascimento_dia  INT,
-    nascimento_mes  INT,
-    nascimento_ano  INT
-    );
-    """
-    cursor.execute(create_tb)
-
-    
-
-    #TABELA DISCO
-    create_tb = """
-    CREATE TABLE Disco (
-    id_disco        INT PRIMARY KEY,
-    título          VARCHAR(255),
-    lançamento_dia  VARCHAR(255),
-    lançamento_mes  VARCHAR(255),
-    lançamento_ano  VARCHAR(255),
-    id_artista      INT,
-    FOREIGN KEY (id_artista) REFERENCES Artista(id_artista)
-    );
-    """
-    cursor.execute(create_tb)
-
-    #TABELA MÚSICA
-    create_tb = """
-    CREATE TABLE Música (
-    id_música       INT PRIMARY KEY,
-    título          VARCHAR(255),
-    duração         INT,
-    id_disco        INT,
-    FOREIGN KEY (id_disco) REFERENCES Disco(id_disco)
-    );
-    """
-    cursor.execute(create_tb)
 
     #TABELA USUÁRIO
     create_tb = """
     CREATE TABLE Usuário (
-    id_usuário      INT PRIMARY KEY,
+    id_usuário      VARCHAR(255) PRIMARY KEY,
     nome_usuário    VARCHAR(255),
     email           VARCHAR(255) UNIQUE,
-    registro_dia    VARCHAR(255),
-    registro_mes    VARCHAR(255),
-    registro_ano    VARCHAR(255)
-    );
+    banca           FLOAT,
+    qntd_cassino    INT,
+    qntd_bet        INT,
+    dia_aposta      INT,
+    mes_aposta      INT,
+    ano_aposta      INT
+);
+
     """
     cursor.execute(create_tb)
 
-    #TABELA PLAYLIST
+    #TABELA DEPÓSITO
     create_tb = """
-    CREATE TABLE Playlist (
-    id_playlist     INT PRIMARY KEY,
-    título          VARCHAR(255),
-    id_usuário      INT,
-    FOREIGN KEY (id_usuário) REFERENCES Usuário(id_usuário)
-    );
+    CREATE TABLE Depósito (
+    id_pagamento    INT PRIMARY KEY,
+    nome_banco      VARCHAR(255),
+    pix             BOOLEAN,
+    número_cartão   INT,
+    CVV_cartão      INT,
+    quantidade      FLOAT,
+    UNIQUE (nome_banco, número_cartão, CVV_cartão, pix, quantidade)
+);
+
     """
     cursor.execute(create_tb)
 
-
-    #TABELA PLAYLIST COM AS MÚSICAS
+    #TABELA USUÁRIO COM DEPÓSITO
     create_tb = """
-    CREATE TABLE Playlist_Música (
-    id_playlist     INT,
-    id_música       INT,
-    PRIMARY KEY (id_playlist, id_música),
-    FOREIGN KEY (id_playlist) REFERENCES Playlist(id_playlist),
-    FOREIGN KEY (id_música) REFERENCES Música(id_música)
-    );
+    CREATE TABLE Usuário_Depósito (
+    id_usuário      VARCHAR(255),
+    id_pagamento    INT,
+    nome_banco      VARCHAR(255),
+    pix             BOOLEAN,
+    número_cartão   INT,
+    CVV_cartão      INT,
+    quantidade      FLOAT,
+    PRIMARY KEY     (id_usuário, id_pagamento),
+    FOREIGN KEY     (id_usuário) REFERENCES Usuário(id_usuário),
+    FOREIGN KEY     (id_pagamento) REFERENCES Depósito(id_pagamento)
+);
+
+
     """
     cursor.execute(create_tb)
 
-    #TABELA MÚSICA COM OS ARTISTAS
+    #TABELA ESPORTES
     create_tb = """
-    CREATE TABLE Música_Artista (
-    id_música       INT,
-    id_artista      INT,
-    PRIMARY KEY (id_música, id_artista),
-    FOREIGN KEY (id_música) REFERENCES Música(id_música),
-    FOREIGN KEY (id_artista) REFERENCES Artista(id_artista)
+    CREATE TABLE Esportes (
+    id_esporte      VARCHAR(255) PRIMARY KEY,
+    nome_jogo       VARCHAR(255),
+    jogo_dia        VARCHAR(255),
+    jogo_mês        VARCHAR(255),
+    jogo_ano        VARCHAR(255),
+    equipe1         VARCHAR(255),
+    equipe2         VARCHAR(255)
     );
     """
     cursor.execute(create_tb)
+    
+    #TABELA APOSTA
+    create_tb = """
+    CREATE TABLE Aposta (
+    id_aposta       INT PRIMARY KEY,
+    id_esporte      VARCHAR(255),
+    id_usuário      VARCHAR(255),
+    odds_equipe1    FLOAT,
+    odds_equipe2    FLOAT,
+    odds_escolhida  FLOAT,
+    valor_aposta    FLOAT,
+    valor_retorno   FLOAT,
+    FOREIGN KEY     (id_usuário) REFERENCES Usuário(id_usuário),
+    FOREIGN KEY     (id_esporte) REFERENCES Esportes(id_esporte)
+);
 
+    """
+    cursor.execute(create_tb)
+
+    #TABELA CASSINO
+    create_tb = """
+    CREATE TABLE Cassino (
+    id_cassino       INT PRIMARY KEY,
+    nome_cassino     VARCHAR(255),
+    valor_aposta     INT,
+    valor_retorno    INT
+    );
+    """
+    cursor.execute(create_tb)
+    
     cnx.commit()
     print("Tabelas Criadas!")
-    alt_queries(cursor,cnx)
 
 def alt_queries(cursor,cnx):
     alt_query = """
-    ALTER TABLE disco
-    ADD CONSTRAINT id_artista FOREIGN KEY (id_artista) REFERENCES artista(id_artista)
+    ALTER TABLE Aposta
+    ADD CONSTRAINT id_aposta FOREIGN KEY (id_aposta) REFERENCES Aposta(id_aposta)
     ON DELETE CASCADE;    
+
+    ALTER TABLE Usuário
+    ADD CONSTRAINT id_usuário FOREIGN KEY (id_usuário) REFERENCES Usuário(id_usuário)
+    ON DELETE CASCADE;    
+
+
     """
     cursor.execute(alt_query)
 
@@ -138,118 +145,128 @@ def alt_queries(cursor,cnx):
 
 def inserir_queries(cursor, cnx):
 
-    #QUERY ARTISTA
-    inserir_query = """
-    INSERT INTO artista (id_artista, nome_artista, nascimento_dia, nascimento_mes, nascimento_ano)
-    VALUES (%s, %s, %s, %s, %s)
-    """
-    for i in range(1, 31):
-        nome_artista = fk.name()
-        ano = random.randint(1980,2007)
-        mes = random.randint(1,12)
-        dia = random.randint(1,30)
-        _id = (i, nome_artista, dia, mes, ano)
-        cursor.execute(inserir_query, _id)
-        cnx.commit()
-
-
     #QUERY USUÁRIO
     inserir_query = """
-    INSERT INTO usuário (id_usuário, nome_usuário, email, registro_dia, registro_mes, registro_ano)
-    VALUES (%s, %s, %s, %s, %s, %s)
+    INSERT INTO Usuário (id_usuário, nome_usuário, email, banca, qntd_cassino, qntd_bet, dia_aposta, mes_aposta, ano_aposta)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
-    for i in range(1, 41):
-        id_usuario = i
-        nome_usuario = fk.first_name() +" "+ fk.last_name()
-        user = nome_usuario.replace(" ", "").lower()
-        gmail = user+str(id_usuario)+"@gmail.com"
-        outlook = user+str(id_usuario)+"@outlook.com"
-        email = [gmail, outlook]
-        email_user = random.choice(email)
-        ano = random.randint(1960,2006)
-        mes = random.randint(1,12)
-        dia = random.randint(1,30)
-        _id = (id_usuario, nome_usuario, email_user, dia, mes, ano)
- 
+    for i in range(1, 71):
+        nome_usuario = fk.name()
+        id_usuario = nome_usuario + i
+        emails = ["@gmail.com", "@outlook.com"]
+        email_user = id_usuario + random.choice(emails)
+        ano_aposta = random.randint(2021,2024)
+        mes_aposta = random.randint(1,12)
+        dia_aposta = random.randint(1,30)
+        qntd_cassino = random.randint(0,800)
+        qntd_bet = random.randint(0,700)
+        banca = random.randint(-200, 10000)
+        _id = (id_usuario, nome_usuario, email_user, banca, qntd_cassino, qntd_bet, dia_aposta, mes_aposta, ano_aposta)
         cursor.execute(inserir_query, _id)
         cnx.commit()
 
 
-    #QUERY DISCO
+    #QUERY DEPÓSITO
     inserir_query = """
-    INSERT INTO disco (id_disco, título, lançamento_dia, lançamento_mes, lançamento_ano, id_artista)
+    INSERT INTO depósito (id_pagamento, nome_banco, pix, número_cartão, CVV_cartão, quantidade)
     VALUES (%s, %s, %s, %s, %s, %s)
     """
+    for i in range(1, 101):
+        id_pagamento = i
+        bancos = ['Santander', 'Banco do Brasil', 'Itaú', 'PicPay', 'Nubank', 'Bradesco']
+        nome_banco = random.choice(bancos)
+        pix = bool(random.getrandbits(1))
+        if pix == False:
+            n_cartao = random.randint(550000231,999123491)
+            cvv = random.randint(000,999)
+        else:
+            n_cartao = bool(0)
+            cvv = bool(0)
+        
+        quantidade = random.randint(30,10000)
+        _id = (id_pagamento, nome_banco, pix, n_cartao, cvv, quantidade)
+        cursor.execute(inserir_query, _id)
+        cnx.commit()
+
+     #QUERY Usuário_Depósito
+    inserir_query = """
+    INSERT INTO Usuário_Depósito (id_usuário, id_pagamento, nome_banco, pix, número_cartão, CVV_cartão, quantidade)
+    VALUES (%s, %s, %s, %s, %s, %s, %s)
+    """
+    for i in range(1,91):
+        _id = (id_usuario, id_pagamento, nome_banco, pix, n_cartao, cvv, quantidade)
+        cursor.execute(inserir_query, _id)
+        cnx.commit()
+
+    #QUERY ESPORTES
+    inserir_query = """
+    INSERT INTO Esportes (id_esporte, nome_jogo, jogo_dia, jogo_mês, jogo_ano, equipe1, equipe2)
+    VALUES (%s, %s, %s, %s, %s, %s, %s)
+    """
+    nome_jogo = random.choice('Futebol','Basquete','CS2')
+
+    for i in range(1,121):
+        if nome_jogo == 'Futebol':
+            equipes = ['Corinthians','Internacional','Vasco','Flamengo','Barcelona','Real Madrid','Souza','Brasiliense','Cruzeiro','Boca Juniors','Portuguesa','Botafogo']
+
+        if nome_jogo == 'Basquete':
+            equipes = ['Dallas Maverics', 'Corinthians','Miami Heat', 'Brooklyn Nets', 'Franca', 'Timberwolves', 'Lakers','Golden State','Grizziles']
     
-    for i in range(1,31):
-        titulo = fk.word()
-        ano = random.randint(1980,2024)
-        mes = random.randint(1,12)
-        dia = random.randint(1,30)
-        id_artista = random.randint(1,30)
-        _id = (i, titulo, dia, mes, ano, id_artista)
+        if nome_jogo == 'CS2':
+            equipes = ['Corinthians', 'Imperial','Spirit','MIBR','Furia','Fluxo','Faze','Liquid','Virtus Pro','SK','NAVI','OG']
+            
+        jogo_ano = random.randint(2023,2024)
+        jogo_mes = random.randint(1,12)
+        jogo_dia = random.randint(1,30)
+        equipe1 = random.choice(equipes)
+        equipe2 = random.choice(equipes)
+        id_esporte = equipe1 + equipe2 + jogo_ano + jogo_mes + jogo_dia
+        _id = (id_esporte, nome_jogo, jogo_dia, jogo_mes, jogo_ano)
         cursor.execute(inserir_query, _id)
         cnx.commit()
 
-    #QUERY MÚSICA
+    #QUERY APOSTA
     inserir_query = """
-    INSERT INTO música (id_música, título, duração, id_disco)
+    INSERT INTO Aposta (id_aposta, id_esporte, nome_usuário, odds_equipe1, odds_equipe2, odds_escolhida, valor_aposta, valor_retorno)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+    """
+
+    for i in range(1, 161):
+        odds = round(random.uniform(1,7), 2)
+        odds_equipe1 = random.choice(odds)
+        odds_equipe2 = random.choice(odds)
+        valor_aposta = random.randint(1,2000)
+        ganhou = bool(random.getrandbits(1))
+        odds_escolhida = random.choice(odds_equipe1, odds_equipe2)
+        if ganhou == True: 
+            valor_retorno = valor_aposta * odds_escolhida
+        else:
+            valor_retorno = 0
+
+        _id = (i, id_esporte, nome_usuario, odds_equipe1, odds_equipe2, odds_escolhida, valor_aposta, valor_retorno)
+        cursor.execute(inserir_query, _id)
+        cnx.commit()
+
+    
+    #QUERY CASSINO
+    inserir_query = """
+    INSERT INTO Cassino (id_cassino, nome_cassino, valor_aposta, valor_retorno)
     VALUES (%s, %s, %s, %s)
     """
-    palavra1 = ["Diário", "Not Like", "Você", "BARRAS &", "Jorge", "Castelo &", "A", "Triunfo", "Sucrilhos", "Ouro de", "Me dê", "1406", "Pais e", "The Story of", "PRIDE", "Vamp", "Fantástico", "Se", "Tolo", "Planos", "Proteção", "Tudo que ", "É na", "Ainda é", "Da Vinci", "Moonlight", "Devil In A", "Rumo à", "Aerials", "Wind of", "telepatía"]
-    palavra2 = ["You","Imahori","Primavera","4M","Coqueiro","saiu da tumba","baixo","Apocalipse","Sucrilhos","Mundo da Oakley","Vitória","cantar","Ambulante","madrugada","Code","Capadócia","Comédia Humana","oco","New Dress","BARRAS","Maravilha","Change","Tolo","Motivo","'Em Up","Az A Ridah","O.J.","Versículo 3","Filho","Us","Detento"]
-    
-    for i in range(1, 61):
-        p1 = random.choice(palavra1)
-        p2 = random.choice(palavra2)
-        titulo = p1 + " " + p2
-        duracao = random.randint(60,450)
-        id_disco = random.randint(1,30)
-        _id = (i, titulo, duracao, id_disco)
-        cursor.execute(inserir_query, _id)
-        cnx.commit()
+    cassino = ['Tigrinho', 'Touro', 'Avião', 'BlackJack', 'Roleta', 'Penalty']
 
-    
-    #QUERY PLAYLIST
-    inserir_query = """
-    INSERT INTO playlist (id_playlist, título, id_usuário)
-    VALUES (%s, %s, %s)
-    """
-    
     for i in range(1,91):
-        titulo = fk.word()
-        id_usuario = random.randint(1,40) 
-        id_playlist = i
-        _id = (id_playlist, titulo, id_usuario)
+        nome_cassino = random.choice(cassino)
+        valor_aposta = random.randint(1,200)
+        ganhou = bool(random.getrandbits(1))
+        if ganhou == True: 
+            valor_retorno = valor_aposta * round(random.uniform(1,6), 2)
+        else:
+            valor_retorno = 0
+        _id = (i, nome_cassino, valor_aposta, valor_retorno)
         cursor.execute(inserir_query, _id)
         cnx.commit()
 
-
-    #QUERY MÚSICA-ARTISTA 
-    inserir_query = """
-    INSERT INTO Música_Artista (id_música, id_artista)
-    VALUES (%s, %s)
-    """
-    for i in range(1,61):
-        id_musica = i
-        id_artista = random.randint(1,30)
-        _id = (id_musica, id_artista)
-        cursor.execute(inserir_query, _id)
-        cnx.commit()
-
-
-
-    #QUERY PLAYSLIST-MÚSICA 
-    inserir_query = """
-    INSERT INTO Playlist_Música (id_playlist, id_música)
-    VALUES (%s, %s)
-    """
-    for i in range(1,81):
-        id_playlist = i
-        id_musica = random.randint(1,60)
-        _id = (id_playlist, id_musica)
-        cursor.execute(inserir_query, _id)
-        cnx.commit()
 
 if __name__ == "__main__":
     connect()
