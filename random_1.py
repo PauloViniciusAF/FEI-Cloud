@@ -6,10 +6,10 @@ fk = fk("pt_BR")
 
 
 config = {
-    'dbname':'betdb',
-    'user':'paulo',
-    'password':'dT5GNc6ANDRpUpTPTeiUeA',
-    'host':'clutch-master-2467.g8x.gcp-southamerica-east1.cockroachlabs.cloud',
+    'dbname':'NOME DA DATABASE',
+    'user':'NOME DO USER',
+    'password':'SENHA',
+    'host':'HOST',
     'port':'26257'
 }
 
